@@ -57,3 +57,37 @@ src
  - 아직 스프링은 사용하지 않고, 기본 Java 코드로만 연습
 
  - 연습 과정에서 SOLID 원칙 공부
+
+---
+2일차 (2025-09-13)
+
+ - AppConfig를 통해 DIP 원칙 준수
+ - AppConfig를 통해관심사 분리
+ -  AppConfig는 공연 기획자라고 생각하면 된다.
+ -  각 구체 클래스를 선택하고 할당해줌.
+
+ -  구체 파일(Impl)이 이전에는 MemoryMemberRepository를 직접 의존
+ -  AppConfig로 변경 후에는 memberRepository 인터페이스만 의존 (DIP)
+ -  이제 구체 파일은 Memory를 의존하는지, JDBC를 의존하는지, 다른걸 의존하는지 모름 > 실행에만 집중함
+
+MemberServiceImpl 예시
+
+기존 코드
+
+    private final MemberRepository memberRepository = new MemoryMemberRepository();
+
+
+변경된 코드
+
+    기존 코드 주석처리
+
+    //private final MemberRepository memberRepository = new MemoryMemberRepository();
+
+    AppConfig 생성하면서 위의 코드 주석처리
+    이후 생성자 만듦
+
+    private final MemberRepository memberRepository;
+
+    public MemberServiceImpl(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
