@@ -91,3 +91,26 @@ MemberServiceImpl 예시
     public MemberServiceImpl(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
     }
+
+**스프링 전환**
+
+    AppConfig에
+    
+    @Configuration
+    
+    각 메서드에 @Bean 추가 > 스프링 컨테이너에 등록됨
+.
+
+    MemberApp에
+    ApplicationContext applicationContext = new AnnotationConfigApplicationContext(AppConfig.class);
+    //@Bean을 관리해줌
+    MemberService memberService = applicationContext.getBean("memberService", MemberService.class);
+    
+    OrderApp에
+    ApplicationContext applicationContext = new AnnotationConfigApplicationContext(AppConfig.class);
+    MemberService memberService = applicationContext.getBean("memberService",MemberService.class);
+    OrderService orderService = applicationContext.getBean("orderService", OrderService.class);
+    
+    추가
+    
+    ApplicationContext가 Bean을 관리해줌
