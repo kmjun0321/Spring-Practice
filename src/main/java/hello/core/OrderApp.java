@@ -21,7 +21,7 @@ public class OrderApp {
         Member member = new Member(memberId, "memberA", Grade.VIP);
         memberService.join(member); //DB에 넣음
 
-        Order order = orderService.createOrder(memberId, "itemA", 10000);
+        Order order = orderService.createOrder(memberId, "itemA", 20000);
         System.out.println("order = " + order); // Order 클래스의 toString 형식으로 출력됨.
         //order = Order{memberId=1, itemName='itemA', itemPrice=10000, discountPrice=1000}
 
