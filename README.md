@@ -161,3 +161,153 @@ beanDefinitionName = orderService beanDefinition = Root bean: class=null; scope=
 beanDefinitionName = discountPolicy beanDefinition = Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=appConfig; factoryMethodName=discountPolicy; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in hello.core.AppConfig
 
 ```
+
+
+---
+**싱글톤 패턴**
+
+ - 우리가 만들었던 스프링 없는 순수한 DI 컨테이너인 AppConfig는 요청을 할 때 마다 객체를 새로 생성한다.
+ - 고객 트래픽이 초당 100이 나오면 초당 100개 객체가 생성되고 소멸된다!  -> 메모리 낭비가 심하다.
+ - 해결방안은 해당 객체가 딱 1개만 생성되고, 공유하도록 설계하면 된다.  -> 싱글톤 패턴
+
+```declarative
+public class SingletonService {
+
+    private static final SingletonService instance = new SingletonService();
+
+    public static SingletonService getInstance() {
+        return instance;
+    }
+
+    private SingletonService() {
+
+    }
+
+    public void login() {
+        System.out.println("싱글톤 객체 로직 호출");
+    }
+}
+```
+
+ - static 영역에 객체 instance를 미리 하나 생성함
+ - 이 객체는 getInstance()로만 조회 가능
+ - 딱 1개의 객체 인스턴스만 존재하기 때문에 생성자를 private로 막아서 혹시라도 new로 객체 인스턴스가 생성되는것을 막음.
+
+**싱글톤 패턴 문제점**
+ - 싱글톤 패턴을 구현하는 코드 자체가 많이 들어간다.
+ - 의존관계상 클라이언트가 구체 클래스에 의존한다. -> DIP를 위반한다.
+ - 클라이언트가 구체 클래스에 의존해서 OCP 원칙을 위반할 가능성이 높다.
+ - 테스트하기 어렵다.
+ - 내부 속성을 변경하거나 초기화 하기 어렵다.
+ - private 생성자로 자식 클래스를 만들기 어렵다.
+ - 결론적으로 유연성이 떨어진다.
+ - 안티패턴으로 불리기도 한다
+
+**싱글톤 컨테이너**
+ - 스프링 컨테이너는 싱글턴 패턴을 적용하지 않아도, 객체 인스턴스를 싱글톤으로 관리한다.
+    - 이전에 설명한 컨테이너 생성 과정을 자세히 보자. 컨테이너는 객체를 하나만 생성해서 관리한다.
+ - 스프링 컨테이너는 싱글톤 컨테이너 역할을 한다. 이렇게 싱글톤 객체를 생성하고 관리하는 기능을 싱글톤 레지스
+트리라 한다.
+ - 스프링 컨테이너의 이런 기능 덕분에 싱글턴 패턴의 모든 단점을 해결하면서 객체를 싱글톤으로 유지할 수 있다.
+    - 싱글톤 패턴을 위한 지저분한 코드가 들어가지 않아도 된다.
+    - DIP, OCP, 테스트, private 생성자로 부터 자유롭게 싱글톤을 사용할 수 있다
+
+**싱글톤 방식 주의점**
+ - 싱글톤 패턴이든, 스프링 같은 싱글톤 컨테이너를 사용하든, 객체 인스턴스를 하나만 생성해서 공유하는 싱글톤
+방식은 여러 클라이언트가 하나의 같은 객체 인스턴스를 공유하기 때문에 싱글톤 객체는 상태를 유지(stateful)하
+게 설계하면 안된다.
+ - 무상태(stateless)로 설계해야 한다!
+    - 특정 클라이언트에 의존적인 필드가 있으면 안된다.
+    - 특정 클라이언트가 값을 변경할 수 있는 필드가 있으면 안된다!
+    - 가급적 읽기만 가능해야 한다.
+    - 필드 대신에 자바에서 공유되지 않는, 지역변수, 파라미터, ThreadLocal 등을 사용해야 한다.
+ - *스프링 빈의 필드에 공유 값을 설정하면 정말 큰 장애가 발생할 수 있다!!*
+
+---
+**스프링 컨테이너에서 싱글톤을 보장하는 방법**
+
+```declarative
+@Test
+    void configurationTest() {
+        ApplicationContext ac = new AnnotationConfigApplicationContext(AppConfig.class);
+
+        //테스트 용으로 Impl에 직접 구현체를 만들어 두었음. Interface에 없으므로 Impl을 직접 호출
+        MemberServiceImpl memberService = ac.getBean("memberService", MemberServiceImpl.class);
+        OrderServiceImpl orderService = ac.getBean("orderService", OrderServiceImpl.class);
+
+        MemberRepository memberRepository1 = memberService.getMemberRepository();
+        MemberRepository memberRepository2 = orderService.getMemberRepository();
+
+        System.out.println("memberService -> memberRepository = " + memberRepository1);
+        System.out.println("orderService -> memberRepository = " + memberRepository2);
+        //객체를 각자 별도로 만들었지만, 동일한 객체로 생성됨.
+
+        MemberRepository memberRepository = ac.getBean("memberRepository", MemberRepository.class);
+        System.out.println("memberRepository = " + memberRepository);
+        //근데 직접 생성한 빈도 위의 두개와 동일함.
+        // 총 3번을 호출했으나, 모두 동일한 인스턴스
+
+        assertThat(memberService.getMemberRepository()).isSameAs(memberRepository);
+        assertThat(orderService.getMemberRepository()).isSameAs(memberRepository);
+    }
+```
+
+위와 같은 코드가 있을 경우 로직은 다음과 같다.
+
+>AppConfig.class
+> 
+>@Bean memberService 호출 -> memberRepository 호출 -> new MemoryMemberRepository 생성
+> 
+>@Bean orderService 호출 -> memberRepository, discountPolicy 호출 -> new MemoryMemberRepository, new RateDiscountPolicy() 생성
+>
+>이를 보면 종합 2개의 MemoryMemberRepository 객체를 생성하는것 처럼 보임
+> 
+>이는 싱글톤 패턴에서 하나의 객체만 생성한것인지 검증
+
+AppConfig.class에 다음과 같이 출력을 지정하였다.
+```declarative
+@Bean
+    public MemberService memberService() {
+        System.out.println("call AppConfig.memberService");
+        return new MemberServiceImpl(memberRepository()); //생성자 주입
+    }
+
+    //만약 나중에 memberRepository를 Memory가 아닌 DB를 사용하고 싶다면 아래 return 만 변경하면됨
+    // 리턴만 변경하면 갈아끼우는것이 되는것임.
+    @Bean
+    public MemoryMemberRepository memberRepository() {
+        System.out.println("call AppConfig.memberRepository");
+        return new MemoryMemberRepository();
+    }
+
+    @Bean
+    public OrderService orderService() {
+        System.out.println("call AppConfig.orderService");
+        return new OrderServiceImpl(memberRepository(), discountPolicy());
+    }
+```
+우리가 생각하기에 예상 호출 순서는
+1. call AppConfig.memberService
+2. call AppConfig.memberRepository
+3. call AppConfig.orderService
+4. call AppConfig.memberRepository
+5. call AppConfig.memberRepository
+
+위의 순서를 예상할 것이지만, 호출하면 실제 순서는 다음과 같다.
+1. call AppConfig.memberService
+2. call AppConfig.memberRepository
+3. call AppConfig.orderService
+
+이는 AppConfig를 호출 시 'AppConfig@CGLIB' 라는 바이트코드 라이브러리를 이용해 싱글톤을 보장하는 것이다.
+![img_1.png](img/img_1.png)
+
+결과적으로 중복 호출하지 않고 각각 한번만 호출하면서 싱글톤이 보장된다.
+
+---
+
+**@Configuration 을 사용하지 않는다면?**   
+ - AppConfig@CGLIB 로 등록되는 것이 아닌, 내가 작성한 진짜 AppConfig가 호출된다.  
+ - 다만 싱글톤이 보장되지 않는다.  
+ - 스프링 컨테이너를 관리하지 않는다. 
+
+추후 @Autowired 를 통해 의존성 주입이 가능하다.

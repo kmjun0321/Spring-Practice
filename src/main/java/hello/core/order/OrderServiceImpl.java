@@ -58,4 +58,10 @@ public class OrderServiceImpl implements OrderService {
 
         return new Order(memberId, itemName, itemPrice, discountPrice);
     }
+
+    //객체가 싱글톤으로 만들어지는 지 테스트용
+    public MemberRepository getMemberRepository() {
+        return memberRepository;
+    }
+
 }
