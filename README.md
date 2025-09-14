@@ -129,3 +129,10 @@ Bean을 조회하는 여러가지 방법
 >ApplicationContextSameBeanFindTest - 동일한 타입 조회시 오류 상황
 > 
 >ApplicationContextExtedsFindTest - 상속된 빈 조회
+
+---
+
+xml로 Bean 등록하기
+>appConfig.xml
+> 
+>XmlAppContextTest.java 추가
