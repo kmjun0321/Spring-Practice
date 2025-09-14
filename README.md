@@ -114,3 +114,18 @@ MemberServiceImpl 예시
     추가
     
     ApplicationContext가 Bean을 관리해줌
+
+---
+3일차 (2025-09-14)
+
+ApplicationContext...Test.java
+
+Bean을 조회하는 여러가지 방법
+
+>ApplicationContextBasicFindTest - 기본적인 빈 조회 방법
+> 
+>ApplicationContextInfoTest - 모든 빈 조회
+> 
+>ApplicationContextSameBeanFindTest - 동일한 타입 조회시 오류 상황
+> 
+>ApplicationContextExtedsFindTest - 상속된 빈 조회
