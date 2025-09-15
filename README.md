@@ -227,7 +227,7 @@ public class SingletonService {
 **스프링 컨테이너에서 싱글톤을 보장하는 방법**
 
 ```declarative
-@Test
+    @Test
     void configurationTest() {
         ApplicationContext ac = new AnnotationConfigApplicationContext(AppConfig.class);
 
@@ -349,3 +349,125 @@ Config 파일에
 
 * 스프링 부트는 자동빈과 수동빈이 있을 경우 충돌나게 설정 되어있음.
 
+---
+
+**다양한 의존관계 주입 방법**  
+ - 생성자 주입
+ - 수정자 주입(setter 주입)
+ - 필드 주입
+ - 일반 메서드 주입
+
+**생성자 주입**
+ - 이름 그대로 생성자를 통해서 의존 관계를 주입
+ - 지금까지 위에서 공부한 내용이 생성자 주입
+ - 특징
+   - 생성자 호출시점에 딱 1번만 호출 되는것이 보장됨
+   - **불변, 필수** 의존 관계에 사용
+
+```declarative
+@Component
+public class OrderServiceImpl implements OrderService {
+
+   private final MemberRepository memberRepository;
+   private final DiscountPolicy discountPolicy;
+   //final 설정이 되어있으면 무조건 생성자를 통해 할당되어야 함
+   
+   @Autowired
+   public OrderServiceImpl(MemberRepository memberRepository, DiscountPolicy discountPolicy) {
+      this.memberRepository = memberRepository;
+      this.discountPolicy = discountPolicy;
+   }
+}
+```
+**!!생성자가 딱 1개만 있으면 @Autowired생략 가능, 물론 스프링 빈에만 해당**
+
+```declarative
+@Component
+public class OrderServiceImpl implements OrderService {
+
+   private final MemberRepository memberRepository;
+   private final DiscountPolicy discountPolicy;
+   //final 설정이 되어있으면 무조건 생성자를 통해 할당되어야 함
+  
+   //@Autowired 생략
+   public OrderServiceImpl(MemberRepository memberRepository, DiscountPolicy discountPolicy) {
+      this.memberRepository = memberRepository;
+      this.discountPolicy = discountPolicy;
+   }
+}
+```
+
+**수정자 주입**
+ - setter 메서드로 의존관계 주입
+ - 특징
+   - **선택, 변경** 가능성이 있는 의존관계에 사용
+```declarative
+@Component
+public class OrderServiceImpl implements OrderService {
+    private MemberRepository memberRepository; //final 제거
+    private DiscountPolicy discountPolicy; //final 제거
+    
+    @Autowired
+    public void setMemberRepository(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
+
+    @Autowired
+    public void setDiscountPolicy(DiscountPolicy discountPolicy) {
+        this.discountPolicy = discountPolicy;
+    }
+}
+```
+
+**필드 주입**
+ - 그대로 필드에 바로 주입하는 방법
+ - 특징
+   - 코드가 간결해 편해보이지만, 외부에서 변경이 불가능해 테스트하기 힘들다.
+   - DI 프레임워크가 없으면 아무것도 할 수 없다.
+   - 사용하지 말것.
+```declarative
+@Component
+public class OrderServiceImpl implements OrderService {
+    @Autowired
+    private MemberRepository memberRepository;
+    
+    @Autowired
+    private DiscountPolicy discountPolicy;
+}
+```
+
+**일반 메서드 주입**
+ - 일반 메서드에 그냥 @Autowired 박는다.
+ - 잘 사용 안함
+
+
+---
+**@Autowired 옵션**
+```declarative
+static class TestBean {
+
+    @Autowired(required = false)
+    public void setNoBean1(Member noBean1) {
+        System.out.println("noBean1 = " + noBean1);
+    }
+   
+    @Autowired(required = false)    
+    public void setNoBean2(@Nullable Member noBean2) {
+        System.out.println("noBean2 = " + noBean2);
+    }
+   
+    @Autowired(required = false)    
+    public void setNoBean3(Optional<Member> noBean3) {
+        System.out.println("noBean3 = " + noBean3);
+    }
+   
+    /*
+    출력 결과
+    noBean2 = null
+    noBean3 = Optional.empty
+   
+    noBena1 은 호출자체를 안함
+    */
+}
+```
+---
